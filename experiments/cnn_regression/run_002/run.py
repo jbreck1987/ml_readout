@@ -9,8 +9,8 @@ import mlflow
 import numpy as np
 import torch
 from torch.utils.data import TensorDataset, DataLoader
+from pathlib import Path
 import random
-from tqdm.autonotebook import tqdm
 from sklearn.model_selection import train_test_split
 
 from mlcore.training import train_step, test_step
@@ -49,13 +49,15 @@ def main():
     }
 
     # Set up mlflow run
-    mlflow.set_tracking_uri('file:///Users/jtb/Documents/Coding/ucsb/src/ml_readout/experiments/cnn_regression/mlruns')
+    mlflow.set_tracking_uri(Path.cwd().parent / 'mlruns') # Get the parent directory of the current working directory and append mlruns suffix
     mlflow.set_experiment('cnn_regression')
     with mlflow.start_run():
         mlflow.log_params(params)
       
         # Start loop over training sample number range
-        for num_samples in range(100, 1100, 100):
+        start, end, step = 100, 1100, 100
+        for id, num_samples in enumerate(range(start, end, step)):
+            print(f'Iteration {id + 1}/{(end - step) / start}, Training samples: {num_samples}') # Console status udpates
 
             # Load the appropriate dataset
             data_dir = '../../../data/pulses/single_pulse/'
@@ -103,7 +105,7 @@ def main():
             torch.manual_seed(RANDOM_SEED)
             conv_reg_v1 = ConvRegv1(in_channels=2)
             optimizer = torch.optim.SGD(params=conv_reg_v1.parameters(), lr=LR)
-            loss_fn = torch.nn.L1Loss(reduction='mean')
+            loss_fn = torch.nn.MSELoss(reduction='mean')
 
             # We'll be taking the average metric over all epochs and reporting
             # that to mlflow for each value of training sample quantity. Lets
@@ -114,9 +116,7 @@ def main():
             test_acc = []
 
             # Define training/testing loops
-            for epoch in tqdm(range(EPOCHS)):
-                print(f'Epoch: {epoch}/{EPOCHS}')
-                print('------------------------')
+            for _ in range(EPOCHS):
                 train_metrics = train_step(conv_reg_v1,
                                            train_dloader,
                                            loss_fn,
@@ -135,8 +135,8 @@ def main():
                 test_acc.append(test_metrics['acc'])
 
             # Log desired metrics for this iteration
-            mlflow.log_metric('l1loss_train', np.array(train_loss).mean(), num_samples)
-            mlflow.log_metric('l1loss_test', np.array(test_loss).mean(), num_samples)
+            mlflow.log_metric('mseloss_train', np.array(train_loss).mean(), num_samples)
+            mlflow.log_metric('mseloss_test', np.array(test_loss).mean(), num_samples)
             mlflow.log_metric('train_acc', np.array(train_acc).mean(), num_samples)
             mlflow.log_metric('test_acc', np.array(test_acc).mean(), num_samples)
 
