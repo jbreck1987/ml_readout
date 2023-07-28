@@ -10,8 +10,8 @@ import random
 from tqdm.autonotebook import tqdm
 from sklearn.model_selection import train_test_split
 
-from mlcore.training import train_step, test_step, make_predictions
-from mlcore.eval import accuracy_regression, plot_stream_data
+from mlcore.training import train_step, test_step
+from mlcore.eval import accuracy_regression
 
 def main():
     # Define run hyperparams
@@ -24,7 +24,7 @@ def main():
     LR = 0.1
     EPOCHS = 100
     
-    # Define params to record in mlflow artifact for run
+    # Define params to record in mlflow run
     params = {
        'num_samples': NUM_SAMPLES,
        'window_size': WINDOW_SIZE,
