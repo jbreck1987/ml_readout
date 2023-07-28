@@ -2,11 +2,10 @@
 Executes the data loading and training of the model
 """
 
-import matplotlib.pyplot as plt
+import mlflow
 import numpy as np
 import torch
 from torch.utils.data import TensorDataset, DataLoader
-from timeit import default_timer as timer
 import random
 from tqdm.autonotebook import tqdm
 from sklearn.model_selection import train_test_split
@@ -24,6 +23,18 @@ def main():
     BATCH_SIZE = 32
     LR = 0.1
     EPOCHS = 100
+    
+    # Define params to record in mlflow artifact for run
+    params = {
+       'num_samples': NUM_SAMPLES,
+       'window_size': WINDOW_SIZE,
+       'edge_pad': EDGE_PAD,
+       'seed': RANDOM_SEED,
+       'batch_size': BATCH_SIZE,
+       'learning_rate': LR,
+       'epoch_count': EPOCHS,
+       'test_train_ratio': TEST_RATIO
+    }
 
     # Enabling device agnostic code
     if torch.cuda.is_available():
@@ -74,7 +85,6 @@ def main():
 
     train_dloader = DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True)
     test_dloader = DataLoader(dataset=test_dataset, batch_size=BATCH_SIZE, shuffle=False)
-    
 
     ## Model Definition and Training ##
     from models import ConvRegv1
@@ -85,29 +95,32 @@ def main():
     optimizer = torch.optim.SGD(params=conv_reg_v1.parameters(), lr=LR)
     loss_fn = torch.nn.L1Loss(reduction='mean')
 
-    # Define training/testing loops
-    total_time = lambda start_time, stop_time: stop_time - start_time
-    train_time_cnn_start = timer()
-    for epoch in tqdm(range(EPOCHS)):
-        print(f'Epoch: {epoch}\n-----------')
-        train_step(
-            conv_reg_v1,
-            train_dloader,
-            loss_fn,
-            optimizer,
-            accuracy_regression,
-            device
-        )
-        test_step(
-            conv_reg_v1,
-            test_dloader,
-            loss_fn,
-            accuracy_regression,
-            device
-        )
-    train_time_cnn_end = timer()
-    print(f'Total time to train: {total_time(train_time_cnn_start, train_time_cnn_end):.2f}s')   
-    
+    # Define training/testing loops and log them
+    mlflow.set_tracking_uri('file:///Users/jtb/Documents/Coding/ucsb/src/ml_readout/experiments/cnn_regression/mlruns')
+    mlflow.set_experiment('cnn_regression')
+    with mlflow.start_run():
+        mlflow.log_params(params)
+
+        for epoch in tqdm(range(EPOCHS)):
+            print(f'Epoch: {epoch}\n-----------')
+            train_metrics = train_step(conv_reg_v1,
+                                       train_dloader,
+                                       loss_fn,
+                                       optimizer,
+                                       accuracy_regression,
+                                       device)
+
+            test_metrics = test_step(conv_reg_v1,
+                                     test_dloader,
+                                     loss_fn,
+                                     accuracy_regression,
+                                     device)
+
+            # Log desired metrics for this iteration
+            mlflow.log_metric('l1loss_train', train_metrics['loss'], epoch)
+            mlflow.log_metric('l1loss_test', test_metrics['loss'], epoch)
+            mlflow.log_metric('train_accuracy', train_metrics['acc'], epoch)
+            mlflow.log_metric('test_accuracy', test_metrics['acc'], epoch)
+        
 if __name__ == '__main__':
    main()
-        
