@@ -12,17 +12,17 @@ class ConvRegv1(torch.nn.Module):
     def __init__(self, in_channels) -> None:
         super().__init__()
         self.block1 = torch.nn.Sequential(
-            torch.nn.Conv1d(in_channels=in_channels, out_channels=32, kernel_size=5, stride=1) , 
+            torch.nn.Conv1d(in_channels=in_channels, out_channels=32, kernel_size=5, stride=5) , 
             torch.nn.ReLU(),
             torch.nn.MaxPool1d(kernel_size=2)
         )
         self.block2 = torch.nn.Sequential(
-            torch.nn.Conv1d(in_channels=32, out_channels=64, kernel_size=5, stride=1), 
+            torch.nn.Conv1d(in_channels=32, out_channels=64, kernel_size=5, stride=5), 
             torch.nn.ReLU(),
             torch.nn.MaxPool1d(kernel_size=2)
         )
         self.block3 = torch.nn.Sequential(
-            torch.nn.Conv1d(in_channels=64, out_channels=128, kernel_size=2, stride=1), 
+            torch.nn.Conv1d(in_channels=64, out_channels=128, kernel_size=2, stride=2), 
             torch.nn.ReLU(),
             torch.nn.Flatten()
         )
