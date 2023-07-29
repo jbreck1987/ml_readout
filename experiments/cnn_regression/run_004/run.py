@@ -23,7 +23,7 @@ def main():
     TEST_RATIO = 0.2
     BATCH_SIZE = 32
     LR = 0.1
-    EPOCHS = 100 
+    EPOCHS = 10000 
 
     # Define params to record in mlflow run
     params = {
