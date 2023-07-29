@@ -23,7 +23,7 @@ def main():
     TEST_RATIO = 0.2
     BATCH_SIZE = 32
     LR = 0.1
-    EPOCHS = 10000
+    EPOCHS = 100 
 
     # Define params to record in mlflow run
     params = {
@@ -40,10 +40,10 @@ def main():
     # Enabling device agnostic code
     if torch.cuda.is_available():
       device = torch.device("cuda")
-    
+
     elif torch.backends.mps.is_available():
       device = torch.device('mps')
-    
+
     else:
       device = torch.device("cpu")
     print(f'Using device: "{device}"')
@@ -65,6 +65,7 @@ def main():
     for element in pulses:
         X.append(element[0:2,:])
         y.append(np.argwhere(element[2] == 1) / WINDOW_SIZE)
+
 
     # With the training and label data now separated, lets split the dataset into train and test
     X_train, X_test, y_train, y_test = train_test_split(
@@ -122,6 +123,6 @@ def main():
             mlflow.log_metric('l1loss_test', test_metrics['loss'], epoch)
             mlflow.log_metric('train_accuracy', train_metrics['acc'], epoch)
             mlflow.log_metric('test_accuracy', test_metrics['acc'], epoch)
-        
+
 if __name__ == '__main__':
    main()
