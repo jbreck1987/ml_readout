@@ -22,8 +22,8 @@ def main():
     RANDOM_SEED = 42
     TEST_RATIO = 0.2
     BATCH_SIZE = 32
-    LR = 0.1
-    EPOCHS = 10000 
+    LR = 0.01
+    EPOCHS = 1000
 
     # Define params to record in mlflow run
     params = {
