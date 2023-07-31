@@ -8,11 +8,11 @@ import torch
 from pathlib import Path
 from torch.utils.data import TensorDataset, DataLoader
 import random
-from tqdm.autonotebook import tqdm
 from sklearn.model_selection import train_test_split
 
 from mlcore.training import train_step, test_step
 from mlcore.eval import accuracy_regression
+from mlcore.dataset import save_model
 
 def main():
     # Define run hyperparams
@@ -24,6 +24,8 @@ def main():
     BATCH_SIZE = 32
     LR = 0.01
     EPOCHS = 1000
+    MODEL_DIR = Path.cwd() / 'trained_models'
+    MODEL_FNAME = 'cnn_reg'
 
     # Define params to record in mlflow run
     params = {
@@ -123,6 +125,9 @@ def main():
             mlflow.log_metric('l1loss_test', test_metrics['loss'], epoch)
             mlflow.log_metric('train_accuracy', train_metrics['acc'], epoch)
             mlflow.log_metric('test_accuracy', test_metrics['acc'], epoch)
+
+    # Save model weights for review
+    save_model(MODEL_DIR, MODEL_FNAME, conv_reg_v1, 'pt')
 
 if __name__ == '__main__':
    main()
