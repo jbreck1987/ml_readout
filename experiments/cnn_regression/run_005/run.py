@@ -15,7 +15,7 @@ from mlcore.eval import accuracy_regression
 from mlcore.dataset import save_model
 
 def main():
-    # Define run hyperparams
+    # Define run hyperparams and constants
     NUM_SAMPLES = 1000
     WINDOW_SIZE = 1000
     EDGE_PAD = 60
@@ -63,7 +63,7 @@ def main():
     random.shuffle(pulses)
 
     # Now lets separate the training samples (I/Q data) from the label data (photon arrival element)
-    # Note that for the label, feature scaling is being performed to scale the range: [0, 1000] -> [0,1]
+    # Note that for the label, feature scaling is being performed to scale the range: [0, WINDOW_SIZE] -> [0,1]
     for element in pulses:
         X.append(element[0:2,:])
         y.append(np.argwhere(element[2] == 1) / WINDOW_SIZE)
@@ -99,7 +99,7 @@ def main():
     optimizer = torch.optim.SGD(params=conv_reg_v1.parameters(), lr=LR)
     loss_fn = torch.nn.L1Loss(reduction='mean')
 
-    # Define training/testing loops and log them
+    # Define training/testing loops and log them to mlflow
     mlflow.set_tracking_uri(Path.cwd().parent / 'mlruns')
     mlflow.set_experiment('cnn_regression')
     with mlflow.start_run():
