@@ -1,6 +1,7 @@
 # Specific dirs
 data/
 mlruns/
+trained_models
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
