@@ -1,5 +1,6 @@
 """
-Executes the data loading and training of the model
+Executes the data loading and training of the model. This model is trying to predict pulse height
+as opposed to pulse location.
 """
 
 import mlflow
@@ -52,7 +53,7 @@ def main():
 
     # Load the appropriate dataset
     data_dir = '../../../data/pulses/single_pulse/'
-    pulse_list = np.load(data_dir + f'p_single_num{NUM_SAMPLES}_win{WINDOW_SIZE}_pad{EDGE_PAD}.npz')
+    pulse_list = np.load(data_dir + f'vp_single_num{NUM_SAMPLES}_win{WINDOW_SIZE}_pad{EDGE_PAD}.npz')
     pulses = list(pulse_list['pulses'])
 
     # Split the data into the training samples and associated label
@@ -63,10 +64,11 @@ def main():
     random.shuffle(pulses)
 
     # Now lets separate the training samples (I/Q data) from the label data (photon arrival element)
-    # Note that for the label, feature scaling is being performed to scale the range: [0, WINDOW_SIZE] -> [0,1]
+    # Using the photon_arrival timestream to determine where to look in the qp density stream for the
+    # pulse height value.
     for element in pulses:
         X.append(element[0:2,:])
-        y.append(np.argwhere(element[2] == 1) / WINDOW_SIZE)
+        y.append(element[3][np.argwhere(element[2] == 1)])
 
 
     # With the training and label data now separated, lets split the dataset into train and test
