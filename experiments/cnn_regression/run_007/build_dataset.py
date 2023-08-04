@@ -7,11 +7,11 @@ from math import ceil
 from pathlib import Path
 
 from mkidreadoutanalysis.quasiparticletimestream import QuasiparticleTimeStream as QPT
-from mlcore.dataset import make_dataset
+from mlcore.dataset import make_dataset, save_training_data
 
 def main():
     # Define data storage parent location
-    datadir = '../../../data/pulses/single_pulse/'
+    datadir = Path('../../../data/pulses/test/single_pulse/variable_qp_density/raw_iq')
 
     # Define lambda function that determines number of samples based on
     # sampling rate and how long of a window (in time) is desired
@@ -33,7 +33,6 @@ def main():
     # above to generate the dataset
     qpt = QPT(SAMPLING_FREQ, QPT_TIMELEN)
 
-    print(f'Window size: {WINDOW_SIZE}')
     for num_samples in NUM_SAMPLES:
         for pad in EDGE_PAD:
             p = Path(datadir, f'vp_single_num{num_samples}_win{WINDOW_SIZE}_pad{pad}.npz')
@@ -59,8 +58,8 @@ def main():
                     WINDOW_SIZE,
                     False)
 
-                # Convert to numpy array and save to disk as npz
-                np.savez(p, pulses=np.array(pulses))
+                # Save data to disk
+                save_training_data(pulses, datadir, f'vp_single_num{num_samples}_win{WINDOW_SIZE}_pad{pad}.npz')
 
 if __name__ == '__main__':
     main()

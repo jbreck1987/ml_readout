@@ -8,13 +8,10 @@ import mlflow
 import numpy as np
 import torch
 from pathlib import Path
-from torch.utils.data import TensorDataset, DataLoader, random_split
-import random
-from sklearn.model_selection import train_test_split
-
+from torch.utils.data import TensorDataset, DataLoader 
 from mlcore.training import train_step, test_step
 from mlcore.eval import regression_error
-from mlcore.dataset import save_model
+from mlcore.dataset import save_model, load_training_data, stream_to_height, stream_to_arrival
 
 def main():
     # Define run hyperparams and constants
@@ -23,9 +20,9 @@ def main():
     EDGE_PAD = 10
     RANDOM_SEED = 42
     TEST_RATIO = 0.2
-    BATCH_SIZE = 32
+    BATCH_SIZE = 64
     LR = 0.01
-    EPOCHS = 10000
+    EPOCHS = 2000
     MODEL_DIR = Path.cwd() / 'trained_models'
     MODEL_FNAME = 'cnn_reg'
 
@@ -52,42 +49,38 @@ def main():
       device = torch.device("cpu")
     print(f'Using device: "{device}"')
 
-    # Load the appropriate dataset
-    data_dir = '../../../data/pulses/single_pulse/'
-    pulse_list = np.load(data_dir + f'vp_single_num{NUM_SAMPLES}_win{WINDOW_SIZE}_pad{EDGE_PAD}.npz')
-    pulses = list(pulse_list['pulses'])
+    # Define dataset locations and load the training and test data
+    test_dir = Path('../../../data/pulses/test/single_pulse/variable_qp_density/raw_iq')
+    train_dir = Path('../../../data/pulses/train/single_pulse/variable_qp_density/raw_iq')
+    fname = Path(f'vp_single_num{NUM_SAMPLES}_win{WINDOW_SIZE}_pad{EDGE_PAD}.npz')
+    labels = ('i', 'q', 'photon_arrivals', 'qp_density')
+    i_test, q_test, arrs_test, qp_density_test = load_training_data(test_dir / fname, labels=labels)
+    i_train, q_train, arrs_train, qp_density_train = load_training_data(train_dir / fname, labels=labels)
 
-    # Split the data into the training samples and targets after shuffling the dataset.
-    # Using the photon_arrival timestream to determine where to look in the qp density stream for the
-    # pulse height value. Note, converting from ndarrays to tensors here.
-    X, y = [], []
-    random.shuffle(pulses)
-    for element in pulses:
-        X.append(element[0:2,:]) # I and Q timestreams
-        arr_time = np.argwhere(element[2] == 1).item()
-        pulse_height = element[3][arr_time].item()
-        y.append(np.array([arr_time / WINDOW_SIZE, pulse_height]).reshape(1,2)) # Scaling arrival time [0, WINDOW_SIZE] -> [0, 1]
+    # Now we want to expand the dimensions for the i and q streams
+    # since they will be used as input samples.
+    i_test = np.expand_dims(i_test, axis=1)
+    i_train = np.expand_dims(i_train, axis=1)
+    q_test = np.expand_dims(q_test, axis=1)
+    q_train = np.expand_dims(q_train, axis=1)
 
+    # Get pulse heights and photon arrival values
+    target_arrs_train = stream_to_arrival(arrs_train)
+    target_arrs_test = stream_to_arrival(arrs_test)
+    target_qpd_train = stream_to_height(arrs_train, qp_density_train)
+    target_qpd_test = stream_to_height(arrs_test, qp_density_test)
 
-    # With the training and label data now separated, lets split the dataset into train and test
-    X_train, X_test, y_train, y_test = train_test_split(
-        X,
-        y,
-        test_size=TEST_RATIO, # Ratio of test data to use from full dataset; Training is the complement
-        random_state=RANDOM_SEED)
+    # Now we want to convert the loaded data to tensors.
+    # Shape for targets is NUM_SAMPLES x 1 x 2
+    # Shape for inputs is NUM_SAMPLES x 2 x WINDOW_SIZE
+    X_train = torch.Tensor(np.hstack((i_train, q_train))) 
+    X_test = torch.Tensor(np.hstack((i_test, q_test)))
+    y_train = torch.Tensor(np.stack((target_arrs_train, target_qpd_train), axis=2)) 
+    y_test = torch.Tensor(np.stack((target_arrs_test, target_qpd_test), axis=2))
 
-    # Create Dataloader objects
-    # Let's first convert from numpy arrays to Tensors and create datasets
-    X_train = torch.Tensor(np.array(X_train))
-    X_test = torch.Tensor(np.array(X_test))
-    y_train = torch.Tensor(np.array(y_train))
-    y_test = torch.Tensor(np.array(y_test))
-
-    train_dataset = TensorDataset(X_train, y_train)
-    test_dataset = TensorDataset(X_test, y_test)
-
-    train_dloader = DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True)
-    test_dloader = DataLoader(dataset=test_dataset, batch_size=BATCH_SIZE, shuffle=False)
+    # Create the Dataloaders from newly created tensors
+    train_dloader = DataLoader(dataset=TensorDataset(X_train, y_train), batch_size=BATCH_SIZE, shuffle=True)
+    test_dloader = DataLoader(dataset=TensorDataset(X_test, y_test), batch_size=BATCH_SIZE, shuffle=False)
 
     ## Model Definition and Training ##
     from models import ConvRegv2
