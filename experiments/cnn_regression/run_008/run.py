@@ -19,7 +19,6 @@ def main():
     EDGE_PAD = 10
     RANDOM_SEED = 42
     TEST_RATIO = 0.2
-    BATCH_SIZE = [sz for sz in range(32, 1056, 32)] 
     LR = 0.01
     EPOCHS = 5000
     MODEL_DIR = Path.cwd() / 'trained_models'
@@ -82,12 +81,13 @@ def main():
 
     # Setup mlflow tracking
     # We want to track model metrics as a function of batch size.
+    BATCH_SIZE = [sz for sz in range(32, int(NUM_SAMPLES / 2), 32)] # NUM_SAMPLES
     mlflow.set_tracking_uri(Path.cwd().parent / 'mlruns')
     mlflow.set_experiment('cnn_regression')
     with mlflow.start_run():
         mlflow.log_params(params)
         for idx, batch_size in enumerate(BATCH_SIZE):
-            print(f'Iteration: {idx + 1}/{len(BATCH_SIZE)}')
+            print(f'\nIteration: {idx + 1}/{len(BATCH_SIZE)}')
             # Create the Dataloaders from newly created tensors with new batch size
             train_dloader = DataLoader(dataset=TensorDataset(X_train, y_train), batch_size=batch_size, shuffle=True)
             test_dloader = DataLoader(dataset=TensorDataset(X_test, y_test), batch_size=batch_size, shuffle=False)
