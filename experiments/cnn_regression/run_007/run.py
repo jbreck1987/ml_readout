@@ -20,7 +20,7 @@ def main():
     # Define run hyperparams and constants
     NUM_SAMPLES = 1000
     WINDOW_SIZE = 1000
-    EDGE_PAD = 60
+    EDGE_PAD = 10
     RANDOM_SEED = 42
     TEST_RATIO = 0.2
     BATCH_SIZE = 32
@@ -122,8 +122,8 @@ def main():
             # Log desired metrics for this iteration
             mlflow.log_metric('l1loss_train', train_metrics['loss'], epoch)
             mlflow.log_metric('l1loss_test', test_metrics['loss'], epoch)
-            mlflow.log_metric('train_accuracy', train_metrics['acc'], epoch)
-            mlflow.log_metric('test_accuracy', test_metrics['acc'], epoch)
+            mlflow.log_metric('train_error', train_metrics['acc'], epoch)
+            mlflow.log_metric('test_error', test_metrics['acc'], epoch)
 
     # Save model weights for review
     save_model(MODEL_DIR, MODEL_FNAME, conv_reg_v2, 'pt')
