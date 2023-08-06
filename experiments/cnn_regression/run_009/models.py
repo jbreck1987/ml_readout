@@ -57,6 +57,7 @@ class ConvRegv2(torch.nn.Module):
         self.block4 = torch.nn.Sequential(
             torch.nn.Linear(in_features=128*5, out_features=100),
             torch.nn.LeakyReLU(),
+            torch.nn.Dropout(),
             torch.nn.Linear(in_features=100, out_features=2)
         )
     
