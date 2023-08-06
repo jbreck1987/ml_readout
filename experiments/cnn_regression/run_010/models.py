@@ -8,7 +8,7 @@ Model definitions to be used in runs.
 import torch
     
 class BranchedConvReg(torch.nn.Module):
-    def __init__(self, in_channels) -> None:
+    def __init__(self, in_channels, height_hidden_units) -> None:
         super().__init__()
         self.feature_extractor = torch.nn.Sequential(
             torch.nn.Conv1d(in_channels=in_channels, out_channels=32, kernel_size=5, stride=5) , 
@@ -28,10 +28,10 @@ class BranchedConvReg(torch.nn.Module):
             torch.nn.Linear(in_features=100, out_features=1)
         )
         self.height_regression = torch.nn.Sequential(
-            torch.nn.Linear(in_features=128*5, out_features=100),
+            torch.nn.Linear(in_features=128*5, out_features=height_hidden_units),
             torch.nn.LeakyReLU(),
             torch.nn.Dropout(),
-            torch.nn.Linear(in_features=100, out_features=1)
+            torch.nn.Linear(in_features=height_hidden_units, out_features=1)
         )
 
     
