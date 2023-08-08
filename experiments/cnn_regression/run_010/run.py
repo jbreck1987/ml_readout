@@ -23,7 +23,7 @@ def main():
     TEST_RATIO = 0.2
     BATCH_SIZE = 64
     LR = 0.01
-    EPOCHS = 1000
+    EPOCHS = 10000
     MODEL_DIR = Path.cwd() / 'trained_models'
     MODEL_FNAME = 'cnn_reg'
 
