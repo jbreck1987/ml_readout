@@ -88,7 +88,7 @@ def main():
 
     # Lets create a model instance, loss, and optimizer
     torch.manual_seed(RANDOM_SEED)
-    model = BranchedConvReg(2)
+    model = BranchedConvReg(2, 60)
     optimizer = torch.optim.SGD(params=model.parameters(), lr=LR)
     height_loss_fn = torch.nn.L1Loss(reduction='mean')
     arrvival_loss_fn = torch.nn.L1Loss(reduction='mean')
