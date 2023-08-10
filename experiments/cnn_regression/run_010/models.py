@@ -31,7 +31,17 @@ class BranchedConvReg(torch.nn.Module):
         )
         self.height_regression = torch.nn.Sequential(
             torch.nn.Linear(in_features=128*5, out_features=height_hidden_units),
-            torch.nn.LeakyReLU(),
+            torch.nn.Dropout(0.5),
+            torch.nn.Linear(in_features=height_hidden_units, out_features=height_hidden_units),
+            torch.nn.Dropout(0.5),
+            torch.nn.Linear(in_features=height_hidden_units, out_features=height_hidden_units),
+            torch.nn.Dropout(0.5),
+            torch.nn.Linear(in_features=height_hidden_units, out_features=height_hidden_units),
+            torch.nn.Dropout(0.5),
+            torch.nn.ReLU(),
+            torch.nn.Linear(in_features=height_hidden_units, out_features=height_hidden_units),
+            torch.nn.Dropout(0.5),
+            torch.nn.Linear(in_features=height_hidden_units, out_features=height_hidden_units),
             torch.nn.Dropout(0.5),
             torch.nn.Linear(in_features=height_hidden_units, out_features=1)
         )

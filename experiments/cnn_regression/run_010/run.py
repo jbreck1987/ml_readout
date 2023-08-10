@@ -16,14 +16,14 @@ from mlcore.dataset import save_model, load_training_data, stream_to_height, str
 
 def main():
     # Define run hyperparams and constants
-    NUM_SAMPLES = 1000
+    NUM_SAMPLES = 20000
     WINDOW_SIZE = 1000
     EDGE_PAD = 10
-    RANDOM_SEED = 42
+    RANDOM_SEED = 22
     TEST_RATIO = 0.2
-    BATCH_SIZE = 64
+    BATCH_SIZE = 128 
     LR = 0.01
-    EPOCHS = 10000
+    EPOCHS = 2500
     MODEL_DIR = Path.cwd() / 'trained_models'
     MODEL_FNAME = 'cnn_reg'
 
@@ -51,8 +51,8 @@ def main():
     print(f'Using device: "{device}"')
 
     # Define dataset locations and load the training and test data
-    test_dir = Path('../../../data/pulses/test/single_pulse/variable_qp_density/raw_iq')
-    train_dir = Path('../../../data/pulses/train/single_pulse/variable_qp_density/raw_iq')
+    test_dir = Path('../../../data/pulses/test/single_pulse/variable_qp_density/normalized_iq')
+    train_dir = Path('../../../data/pulses/train/single_pulse/variable_qp_density/normalized_iq')
     fname = Path(f'vp_single_num{NUM_SAMPLES}_win{WINDOW_SIZE}_pad{EDGE_PAD}.npz')
     labels = ('i', 'q', 'photon_arrivals', 'phase_response')
     i_test, q_test, arrs_test, theta1_test = load_training_data(test_dir / fname, labels=labels)
@@ -68,8 +68,10 @@ def main():
     # Get pulse heights and photon arrival values
     target_arrs_train = stream_to_arrival(arrs_train)
     target_arrs_test = stream_to_arrival(arrs_test)
-    target_pulse_train = stream_to_height(arrs_train, theta1_train)
-    target_pulse_test = stream_to_height(arrs_test, theta1_test)
+    #target_pulse_train = stream_to_height(arrs_train, theta1_train, norm=False).astype('float16')
+    #target_pulse_test = stream_to_height(arrs_test, theta1_test, norm=False).astype('float16')
+    target_pulse_train = np.min(theta1_train, axis=1, keepdims=True)
+    target_pulse_test = np.min(theta1_test, axis=1, keepdims=True)
 
     # Now we want to convert the loaded data to tensors.
     # Shape for targets is NUM_SAMPLES x 1 x 2
@@ -88,7 +90,7 @@ def main():
 
     # Lets create a model instance, loss, and optimizer
     torch.manual_seed(RANDOM_SEED)
-    model = BranchedConvReg(2, 60)
+    model = BranchedConvReg(2, 100)
     optimizer = torch.optim.SGD(params=model.parameters(), lr=LR)
     height_loss_fn = torch.nn.L1Loss(reduction='mean')
     arrvival_loss_fn = torch.nn.L1Loss(reduction='mean')
