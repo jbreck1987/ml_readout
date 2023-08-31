@@ -1,7 +1,11 @@
 # Specific dirs
+junk/
 data/
 mlruns/
 trained_models
+
+# Numpy data files
+*.npz
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
